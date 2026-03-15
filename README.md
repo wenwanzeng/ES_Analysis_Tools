@@ -25,8 +25,7 @@ This repository is designed as a **collection repo** rather than a single-purpos
 responsibility/
 ├── README.md
 ├── requirements.txt
-└── scripts/
-    └── multiwfn_state_spectrum_tool.py
+└── multiwfn_state_spectrum_tool.py
 ```
 
 ---
