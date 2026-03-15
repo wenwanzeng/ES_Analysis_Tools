@@ -24,9 +24,7 @@ This repository is designed as a **collection repo** rather than a single-purpos
 ```text
 responsibility/
 ├── README.md
-├── HOW_TO_UPLOAD_TO_GITHUB.md
 ├── requirements.txt
-├── .gitignore
 └── scripts/
     └── multiwfn_state_spectrum_tool.py
 ```
