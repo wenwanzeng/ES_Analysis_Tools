@@ -1,58 +1,92 @@
 # responsibility
 
-A small GitHub-ready toolbox for **excited-state analysis workflows**.
+A lightweight and extensible toolbox for **excited-state analysis workflows**.
 
-At the moment, this repository contains one working utility:
+This repository is intended as a **collection of practical utilities** for post-processing and analysis in excited-state calculations, rather than a single-purpose project. It is designed to grow over time as new workflow wrappers and analysis scripts are added.
+
+At present, the repository includes one working utility:
 
 - **Multiwfn state-to-state spectrum tool**
-  - batch-runs Multiwfn on paired `.fchk + .log` files
-  - extracts transition dipole information from `transdipmom.txt`
+  - batch-runs Multiwfn on matched `.fchk` and `.log` files
+  - extracts transition dipole data from `transdipmom.txt`
   - builds **state-resolved SS / TT spectra**
-  - groups transitions by initial-state family such as `S1->Sn`, `T2->Tn`
-  - exports figures, transition tables, family-resolved spectrum data, and logs
+  - groups transitions by initial-state family such as `S1→Sn` and `T2→Tn`
+  - exports figures, transition tables, spectrum data, and logs
 
-This repository is designed as a **collection repo** rather than a single-purpose repo. That means you can continue adding future tools here, for example:
+Planned future additions may include:
 
 - QM/MM cluster analysis wrappers
-- post-processing scripts for excited-state workflows
-- plotting utilities for state-resolved spectra or transition statistics
+- post-processing tools for excited-state workflows
+- plotting utilities for transition statistics and state-resolved spectra
+- HOMO–LUMO and excited-state charge-transfer analysis helpers
 
 ---
 
-## Current repository structure
+## Scope of the repository
+
+This repository is structured as a **collection repository** for excited-state analysis utilities.
+
+Rather than focusing on only one script, it is intended to host multiple reusable tools that support practical post-processing workflows in computational excited-state studies. The current Multiwfn-based spectrum tool serves as the first working module, while future modules may extend the repository toward a broader analysis environment covering orbital analysis, charge-transfer characterization, and QM/MM-based post-processing.
+
+This organization is intentional: keeping each workflow as an independent script under `scripts/` makes the repository easier to maintain, extend, and document as new tools are added.
+
+---
+
+## Repository layout
 
 ```text
 responsibility/
 ├── README.md
 ├── requirements.txt
-└── multiwfn_state_spectrum_tool.py
+└── scripts/
+    └── multiwfn_state_spectrum_tool.py
 ```
 
 ---
 
-## Current tool: Multiwfn state-to-state spectrum tool
+## Current tool
 
-### What it does
+### Multiwfn state-to-state spectrum tool
 
-This script automates the following workflow:
+This script automates a Multiwfn-based workflow for building **excited-state-to-excited-state spectra** from paired Gaussian-style outputs.
 
-1. Run **Multiwfn** on each matched `*.fchk + *.log` pair.
-2. Export `transdipmom.txt`.
-3. Parse transition data from Multiwfn output.
-4. Assign each job as `SS`, `TT`, or infer it when running in `BOTH` mode.
-5. Keep only the transitions intended for plotting.
-6. Build family-resolved spectra with Gaussian broadening in energy space.
-7. Export figures, Excel files, and logs.
+### Main features
 
-### Supported modes
+- batch processing of multiple jobs
+- automatic matching of `.fchk` and `.log` files
+- Multiwfn execution from Python
+- parsing of `transdipmom.txt`
+- support for **SS**, **TT**, or mixed processing
+- family-resolved spectral construction with Gaussian broadening
+- structured export of tables, plots, and logs
 
-- `SS`: singlet-to-singlet excited-state transitions
-- `TT`: triplet-to-triplet excited-state transitions
-- `BOTH`: process both kinds together, with job type inferred from file name or `JOB_KIND_MAP`
+---
 
-### Input requirements
+## What the tool does
 
-Each job must have a matched pair in the same work directory:
+For each matched `*.fchk + *.log` pair, the script performs the following steps:
+
+1. Run **Multiwfn**
+2. Export `transdipmom.txt`
+3. Parse transition information from the Multiwfn output
+4. Assign the job type as `SS`, `TT`, or infer it in `BOTH` mode
+5. Filter transitions according to the plotting rules
+6. Construct family-resolved spectra in energy space using Gaussian broadening
+7. Export figures, Excel files, raw text outputs, and run logs
+
+---
+
+## Supported modes
+
+- `SS` — singlet excited-state to singlet excited-state transitions
+- `TT` — triplet excited-state to triplet excited-state transitions
+- `BOTH` — process both types together, with job type inferred from file names or from a manual mapping
+
+---
+
+## Input requirements
+
+Each calculation must provide a matched pair of files in the same working directory:
 
 ```text
 molecule_1.fchk
@@ -62,11 +96,13 @@ molecule_2.log
 ...
 ```
 
-The stem must match exactly.
+The filename stem must match exactly.
 
-### Output content
+---
 
-By default, the script writes a dedicated output folder under the work directory:
+## Output structure
+
+By default, the script writes results to a dedicated output directory under the working directory:
 
 ```text
 state_spectra_output/
@@ -85,7 +121,7 @@ state_spectra_output/
     └── <molecule>_transitions.xlsx
 ```
 
-### Excel sheets that are actually exported
+### Exported Excel sheets
 
 #### `transitions/<molecule>_transitions.xlsx`
 
@@ -101,31 +137,31 @@ state_spectra_output/
 
 ---
 
-## Important interpretation note
+## Important note on state labeling and plotting rules
 
-This tool does **not** infer spin labels directly from the raw Multiwfn table itself. It uses the selected job type (`SS` or `TT`) to label indices.
+This tool does **not** infer spin labels directly from the raw Multiwfn transition table. Instead, it assigns state labels based on the selected job type (`SS` or `TT`).
 
 In the current implementation:
 
-- for `SS`: index `0 -> S0`, index `n -> Sn`
-- for `TT`: index `0 -> REF`, index `n -> Tn`
+- for `SS`: index `0 → S0`, index `n → Sn`
+- for `TT`: index `0 → REF`, index `n → Tn`
 
-And only **true excited-to-excited** transitions are plotted.
+Only **true excited-to-excited** transitions are retained for spectral plotting.
 
-That means the plotted spectrum is intended for transitions such as:
+That means the plotted spectra are intended for transitions such as:
 
-- `S1 -> S2/S3/...`
-- `S2 -> S3/S4/...`
-- `T1 -> T2/T3/...`
-- `T2 -> T3/T4/...`
+- `S1 → S2/S3/...`
+- `S2 → S3/S4/...`
+- `T1 → T2/T3/...`
+- `T2 → T3/T4/...`
 
-It does **not** plot:
+The following transitions are **not** plotted:
 
-- `S0 -> Sn`
-- `REF -> Tn`
-- inter-multiplicity transitions such as `S -> T` or `T -> S`
+- `S0 → Sn`
+- `REF → Tn`
+- inter-multiplicity transitions such as `S → T` or `T → S`
 
-This point is worth stating clearly in GitHub documentation, because it is exactly the kind of detail that later users will otherwise misunderstand.
+This behavior is intentional and should be kept in mind when interpreting the generated spectra.
 
 ---
 
@@ -143,12 +179,12 @@ pip install -r requirements.txt
 
 ### 2. Multiwfn
 
-Install Multiwfn separately and make sure you know the path to `Multiwfn.exe`.
+Install **Multiwfn** separately and make sure the path to `Multiwfn.exe` is available.
 
 You can either:
 
 - pass it explicitly with `--multiwfn`, or
-- set an environment variable named `MULTIWFN_EXE`
+- define an environment variable named `MULTIWFN_EXE`
 
 Example on Windows PowerShell:
 
@@ -160,9 +196,9 @@ $env:MULTIWFN_EXE = "C:\\Path\\To\\Multiwfn.exe"
 
 ## Usage
 
-### Recommended command-line usage
+### Basic example
 
-From the repository root:
+Run from the repository root:
 
 ```bash
 python scripts/multiwfn_state_spectrum_tool.py \
@@ -184,7 +220,7 @@ python scripts/multiwfn_state_spectrum_tool.py \
 - `--output-to-workdir-root`
 - `--output-root-name state_spectra_output`
 
-### Example: keep outputs inside a named folder
+### Example: custom output folder name
 
 ```bash
 python scripts/multiwfn_state_spectrum_tool.py \
@@ -196,16 +232,16 @@ python scripts/multiwfn_state_spectrum_tool.py \
 
 ---
 
-## How `BOTH` mode decides whether a file is SS or TT
+## How `BOTH` mode determines SS vs TT jobs
 
-When `--mode BOTH` is used, the script tries to infer job type from the file stem.
+When `--mode BOTH` is used, the script attempts to infer the job type from the filename stem.
 
-It looks for patterns such as:
+Patterns currently checked include:
 
 - TT-like: `t1`, `tt`, `triplet`
 - SS-like: `s0`, `ss`, `singlet`
 
-If this is not reliable for your files, edit `JOB_KIND_MAP` in the script and define the mapping manually.
+If this is not reliable for your naming scheme, define the mapping manually in `JOB_KIND_MAP` inside the script.
 
 Example:
 
@@ -216,44 +252,54 @@ JOB_KIND_MAP = {
 }
 ```
 
-This is the safest choice when your naming convention is fixed and you want reproducible behavior.
+For fixed naming conventions, a manual mapping is the safest and most reproducible choice.
 
 ---
 
-## What is already good about this tool
+## Design considerations
 
-Compared with a one-off local plotting script, this version is already suitable for a GitHub repo because it has:
+The current implementation is designed to be more reusable than a one-off local plotting script. It provides:
 
-- command-line arguments
-- structured output folders
-- log files and run summaries
-- batch processing of many jobs
-- clear separation between raw transitions, plotting transitions, and spectrum data
+- command-line execution
+- batch processing for multiple jobs
+- structured output directories
+- run logs and summary files
+- explicit separation between raw transitions, annotated transitions, and plotted transitions
+- reproducible export of spectrum figures and data tables
 
-That makes it a decent first module in a larger excited-state analysis toolbox.
+These design choices make the tool easier to maintain and extend as part of a broader excited-state analysis toolbox.
 
 ---
 
-## Recommended future additions
+## Future directions
 
-When you add more tools to this repository later, a clean direction would be:
+This repository is expected to grow gradually as additional workflow modules become available.
 
-1. keep each workflow as an independent script under `scripts/`
-2. keep one top-level README for the whole repository
-3. add one short usage section for each tool
-4. only split into subpackages when the repo becomes clearly multi-module
+Likely future additions include:
 
-For your next planned feature, a natural next addition would be something like:
+- QM/MM cluster analysis wrappers
+- HOMO–LUMO analysis helpers
+- excited-state charge-transfer and IFCT analysis tools
+- additional plotting and reporting utilities for excited-state calculations
+
+A natural example of a future addition would be:
 
 ```text
 scripts/qmmm_cluster_analysis.py
 ```
 
-That will fit very naturally into the current repository layout.
+As more tools are added, the repository can remain organized by keeping each workflow self-contained under `scripts/`, while documenting them centrally through the top-level `README.md`.
 
 ---
 
-## Citation / acknowledgement
+## Acknowledgement
 
-If you use this repository in a paper or internal workflow note, please cite the underlying computational tools appropriately, especially **Multiwfn**.
+If you use this repository in academic work or internal workflow documentation, please make sure to properly acknowledge the underlying computational software, especially **Multiwfn**.
 
+---
+
+## Status
+
+This repository is under active development.
+
+The current version is already usable for Multiwfn-based SS/TT state-resolved spectrum analysis, and additional workflow tools will be added over time.
